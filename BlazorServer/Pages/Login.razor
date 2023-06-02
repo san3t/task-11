@@ -1,0 +1,59 @@
+﻿@page "/login"
+@using BlazorServer.Auth;
+@inject IUserService UserService
+@inject IJSRuntime js
+@inject AuthenticationStateProvider authStateProvider
+@inject NavigationManager navManager
+
+<div class="row">
+    <div class="col-1g-4 offset-1g-4 pt-4 pb-4 border">
+        :       <div class="mb-3 text-center">
+            <h3>Login</h3>
+        </div>
+        <div class="mb-3">
+            <label>Login</label>
+            <input @bind="model.Email" type="text" class="form-contol" placeholder="Email" />
+        </div>
+        <div class="mb-3">
+            <label>Password</label>
+            <input @bind="model.Password" type="text" class="form-contol" placeholder="Password" />
+        </div>
+        <div class="mb-3 d-grid gap-2">
+            <button @onclick="Authenticate" class="btn btn-primary">Login</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private class Model
+    {
+        public string Email{ get; set; }
+        public string Password{ get; set; }
+    }
+
+    private Model model = new Model();
+
+    private async Task Authenticate()
+    {
+        var userAccount = await UserService.Login(model.Email, model.Password);
+        if(userAccount == null)
+        {
+            await js.InvokeVoidAsync("alert", "invalid Colyaska");
+            return;
+        }
+
+        var customAuthStateProvider = (CustomAuthenticationStateProvider)authStateProvider;
+
+        await customAuthStateProvider.UpdateAuthenticationStateAsync(new UserSession
+        {
+            Id = userAccount.Id.ToString(),
+            Email = userAccount.UserEmail,
+            FirstName = userAccount.FirstName,
+            Role = "User"
+        });
+
+        navManager.NavigateTo("/", true);
+
+    }
+
+}
